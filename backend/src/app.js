@@ -11,21 +11,34 @@
 // usando multer com diskStorage. Não utilize provedores externos.
 
 const express = require('express');
+const multer = require('multer');
+const { port } = require('./config');
+const documentRoutes = require('./routes/documentRoutes');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
-// Endpoint de verificação de saúde. As demais rotas (/upload, /documents,
-// /documents/:id/download) serão implementadas durante o Passo 2.
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
+app.use(documentRoutes);
+
+app.use((err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(413).json({ error: 'O arquivo excede o tamanho máximo permitido.' });
+    }
+    return res.status(400).json({ error: 'Envio de arquivo inválido. Use o campo "file".' });
+  }
+  console.error(err);
+  return res.status(500).json({ error: 'Erro interno do servidor.' });
+});
+
 if (require.main === module) {
-  app.listen(PORT, () => {
-    console.log(`DMS backend ouvindo na porta ${PORT}`);
+  app.listen(port, () => {
+    console.log(`DMS backend ouvindo na porta ${port}`);
   });
 }
 
