@@ -25,12 +25,13 @@ export async function uploadDocument(userId, file) {
 }
 
 // O download exige o cabeçalho X-User-Id, por isso usa fetch + Blob em vez de um link direto.
-export async function downloadDocument(userId, document) {
-  const response = await request(`/documents/${encodeURIComponent(document.id)}/download`, userId);
+export async function downloadDocument(userId, documentMeta) {
+  const response = await request(`/documents/${encodeURIComponent(documentMeta.id)}/download`, userId);
   const url = URL.createObjectURL(await response.blob());
-  const link = window.document.createElement('a');
+  const link = document.createElement('a');
   link.href = url;
-  link.download = document.originalName;
+  link.download = documentMeta.originalName;
   link.click();
-  URL.revokeObjectURL(url);
+  // Revoga após o clique ser processado; revogar imediatamente cancela o download em alguns navegadores.
+  setTimeout(() => URL.revokeObjectURL(url), 0);
 }

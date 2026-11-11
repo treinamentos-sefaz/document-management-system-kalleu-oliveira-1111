@@ -5,13 +5,13 @@ function toPublic({ storedName, ...publicFields }) {
   return publicFields;
 }
 
-function registerUpload(file, owner) {
+function registerUpload({ originalName, storedName, mimeType, size }, owner) {
   const document = {
     id: randomUUID(),
-    originalName: file.originalname,
-    storedName: file.filename,
-    mimeType: file.mimetype,
-    size: file.size,
+    originalName,
+    storedName,
+    mimeType,
+    size,
     uploadedAt: new Date().toISOString(),
     owner,
   };

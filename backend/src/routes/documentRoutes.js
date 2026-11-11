@@ -10,9 +10,11 @@ const storage = multer.diskStorage({
   filename: (req, file, callback) => callback(null, randomUUID()),
 });
 
+// defParamCharset utf8: navegadores enviam o nome do arquivo em UTF-8 (o padrão do multer é latin1).
 const uploadSingleFile = multer({
   storage,
-  limits: { fileSize: maxFileSizeBytes },
+  defParamCharset: 'utf8',
+  limits: { fileSize: maxFileSizeBytes, files: 1, fields: 0 },
 }).single('file');
 
 const router = express.Router();

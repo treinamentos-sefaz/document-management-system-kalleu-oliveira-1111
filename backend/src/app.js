@@ -17,20 +17,25 @@ const documentRoutes = require('./routes/documentRoutes');
 
 const app = express();
 
-app.use(express.json());
-
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
 app.use(documentRoutes);
 
+app.use((req, res) => {
+  res.status(404).json({ error: 'Rota não encontrada.' });
+});
+
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) {
     if (err.code === 'LIMIT_FILE_SIZE') {
       return res.status(413).json({ error: 'O arquivo excede o tamanho máximo permitido.' });
     }
-    return res.status(400).json({ error: 'Envio de arquivo inválido. Use o campo "file".' });
+    return res.status(400).json({ error: 'Envio de arquivo inválido. Envie apenas um arquivo no campo "file".' });
+  }
+  if (err.status >= 400 && err.status < 500) {
+    return res.status(err.status).json({ error: 'Requisição inválida.' });
   }
   console.error(err);
   return res.status(500).json({ error: 'Erro interno do servidor.' });

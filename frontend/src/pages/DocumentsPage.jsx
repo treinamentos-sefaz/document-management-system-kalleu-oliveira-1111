@@ -9,25 +9,31 @@ export default function DocumentsPage() {
   const [userId, setUserId] = useState(DEFAULT_USER_ID);
   const [documents, setDocuments] = useState([]);
   const [error, setError] = useState('');
+  const [reloadKey, setReloadKey] = useState(0);
 
   const trimmedUserId = userId.trim();
-
-  const loadDocuments = useCallback(async () => {
-    if (!trimmedUserId) {
-      setDocuments([]);
-      return;
-    }
-    try {
-      setError('');
-      setDocuments(await listDocuments(trimmedUserId));
-    } catch (loadError) {
-      setError(`Erro ao carregar documentos: ${loadError.message}`);
-    }
-  }, [trimmedUserId]);
+  const reloadDocuments = useCallback(() => setReloadKey((key) => key + 1), []);
 
   useEffect(() => {
-    loadDocuments();
-  }, [loadDocuments]);
+    // Ignora respostas de requisições antigas quando o usuário muda antes de elas terminarem.
+    let isCurrent = true;
+    setError('');
+    if (!trimmedUserId) {
+      setDocuments([]);
+      return undefined;
+    }
+    listDocuments(trimmedUserId)
+      .then((loadedDocuments) => isCurrent && setDocuments(loadedDocuments))
+      .catch((loadError) => {
+        if (isCurrent) {
+          setDocuments([]);
+          setError(`Erro ao carregar documentos: ${loadError.message}`);
+        }
+      });
+    return () => {
+      isCurrent = false;
+    };
+  }, [trimmedUserId, reloadKey]);
 
   return (
     <main style={{ fontFamily: 'system-ui, sans-serif', padding: '2rem' }}>
@@ -38,7 +44,7 @@ export default function DocumentsPage() {
         <input value={userId} onChange={(event) => setUserId(event.target.value)} />
       </label>
 
-      <UploadComponent userId={trimmedUserId} onUploaded={loadDocuments} />
+      <UploadComponent userId={trimmedUserId} onUploaded={reloadDocuments} />
 
       <h2>Meus documentos</h2>
       {error && <p role="alert">{error}</p>}
