@@ -1,28 +1,31 @@
 import { useState } from 'react';
+import Icon from './Icon.jsx';
 import { downloadDocument } from '../services/documentService.js';
 
-export default function DownloadButton({ userId, document }) {
+export default function DownloadButton({ userId, document, onError }) {
   const [isDownloading, setIsDownloading] = useState(false);
-  const [error, setError] = useState('');
 
   async function handleClick() {
     setIsDownloading(true);
-    setError('');
     try {
       await downloadDocument(userId, document);
     } catch (downloadError) {
-      setError(`Erro ao baixar: ${downloadError.message}`);
+      onError(`Falha ao baixar "${document.originalName}": ${downloadError.message}`);
     } finally {
       setIsDownloading(false);
     }
   }
 
   return (
-    <>
-      <button type="button" onClick={handleClick} disabled={isDownloading}>
-        {isDownloading ? 'Baixando...' : 'Baixar'}
-      </button>
-      {error && <span role="alert"> {error}</span>}
-    </>
+    <button
+      type="button"
+      className="button button--ghost"
+      onClick={handleClick}
+      disabled={isDownloading}
+      aria-label={`Baixar ${document.originalName}`}
+    >
+      {isDownloading ? <span className="spinner" /> : <Icon name="download" size={18} />}
+      <span className="button__label">{isDownloading ? 'Baixando' : 'Baixar'}</span>
+    </button>
   );
 }
